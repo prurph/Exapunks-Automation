@@ -59,17 +59,27 @@ class Board():
 				self.bounding_box_list[c].append(new_bounding_box)
 
 	def get_card(self, capture):
-		dir = os.listdir(CARD_IMAGES)
+        	dir = os.listdir(CARD_IMAGES)
 
 		for image_os in dir:
 			image_name = os.fsdecode(image_os)
-			image = Image.open(CARD_IMAGES + image_os).convert('RGB')
+			image = Image.open(CARD_IMAGES + image_os).convert("RGB")
 
-			if list(image.getdata()) == list(capture.getdata()):
-				card_value = image_name[0]
-				card_suit = image_name[1]
+			deltas = [
+				abs(i[x] - c[x])
+				for i, c in zip(image.getdata(), capture.getdata())
+				for x in (0, 1, 2)
+			]
 
-				return Card(card_value, card_suit)
+			if all(d < 2 for d in deltas):
+                		card_value = image_name[0]
+                		card_suit = image_name[1]
+
+                		return Card(card_value, card_suit)
+		else:
+			capture.save("mismatch.png")
+			raise RuntimeError("Failed to get card from captured image; saved capture to mismatch.png")
+
 	def make_game(self):
 		rank_cards = []
 		for rank_idx in range(len(self.bounding_box_list)):
